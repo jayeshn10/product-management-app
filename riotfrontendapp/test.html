@@ -1,0 +1,233 @@
+<script>
+function getCookie(name) {
+  var cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    var cookies = document.cookie.split(";");
+    for (var i = 0; i < cookies.length; i++) {
+      var cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === name + "=") {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+
+  return cookieValue;
+}
+
+function updateproductable(e) {
+
+  fetch(`http://127.0.0.1:8000/product/?limit=1000&name__contains=${e.state.searchqry}`)
+    .then((res) => res.json())
+    .then(
+      (data) => {
+
+        e.update({
+          items: data.results
+        })
+
+
+      },
+      (error) => {
+        console.log('error');
+
+      }
+    )
+
+
+
+}
+
+
+export default {
+  onBeforeMount(props, state) {
+    // initial state
+    this.state = {
+      items: props.items,
+      inEditMode: { status: false, itmid: null },
+      e_error_pname: false,
+      e_error_price: false,
+      e_error_qty: false,
+      a_error_pname: false,
+      a_error_price: false,
+      a_error_qty: false,
+      searchqry: ''
+    }
+  },
+  add(e) {
+    e.preventDefault()
+    // update only the text state
+
+    let name = e.target.pname.value
+    let price = e.target.price.value
+    let quantity = e.target.quantity.value
+
+    let a_valid = true
+
+    if (!(name.match("^[A-Za-z0-9]+$"))) {
+      a_valid = false
+      console.log('wrong input')
+      this.update({ a_error_pname: true })
+    } else {
+      this.update({ a_error_pname: false })
+    }
+
+    if (!(price.match(/^(-?\d*)((\.(\d{0,2})?)?)$/i))) {
+      a_valid = false
+      console.log('wrong input')
+      this.update({ a_error_price: true })
+    } else {
+      this.update({ a_error_price: false })
+    }
+
+
+    if (!(quantity.match(/^[-+]?[0-9]+$/))) {
+      a_valid = false
+      console.log('wrong input')
+      this.update({ a_error_qty: true })
+    } else {
+      this.update({ a_error_qty: false })
+    }
+
+    if (a_valid) {
+
+      var csrftoken = getCookie("csrftoken");
+
+      fetch("http://127.0.0.1:8000/product/create/", {
+          method: "POST",
+          headers: {
+            "Content-type": "application/json",
+            "X-CSRFToken": csrftoken,
+          },
+          body: JSON.stringify({ name: name, price: price, quantity: quantity }),
+        })
+        .then((response) => {
+          updateproductable(this)
+          console.log('fetchdone')
+
+        })
+        .catch(function(error) {
+          console.log("ERROR:", error)
+        })
+
+
+      $('#addprodModal').modal('hide')
+      this.update({
+        a_error_pname: false,
+        a_error_price: false,
+        a_error_qty: false,
+      })
+
+      $("input[name=pname]").val('')
+      $("input[name=price]").val('')
+      $("input[name=quantity]").val('')
+
+
+    }
+
+  },
+  edit(id) {
+
+    this.update({
+      inEditMode: { status: true, itmid: id }
+    })
+  },
+  editcancle() {
+
+    this.update({
+      inEditMode: { status: false, itmid: null },
+      e_error_pname: false,
+      e_error_price: false,
+      e_error_qty: false,
+    })
+  },
+  editsave(eid) {
+
+    let ename = $("input[name=ename]").val()
+    let eprice = $("input[name=eprice]").val()
+    let equantity = $("input[name=equantity]").val()
+
+    let valid = true
+
+    if (!(ename.match("^[A-Za-z0-9]+$"))) {
+      valid = false
+      console.log('wrong input')
+      this.update({ e_error_pname: true })
+    } else {
+      this.update({ e_error_pname: false })
+    }
+
+    if (!(eprice.match(/^(-?\d*)((\.(\d{0,2})?)?)$/i))) {
+      valid = false
+      console.log('wrong input')
+      this.update({ e_error_price: true })
+    } else {
+      this.update({ e_error_price: false })
+    }
+
+
+    if (!(equantity.match(/^[-+]?[0-9]+$/))) {
+      valid = false
+      console.log('wrong input')
+      this.update({ e_error_qty: true })
+    } else {
+      this.update({ e_error_qty: false })
+    }
+
+
+    if (valid) {
+
+      var csrftoken = getCookie("csrftoken");
+
+      fetch(`http://127.0.0.1:8000/product/update/${eid}`, {
+          method: "POST",
+          headers: {
+            "Content-type": "application/json",
+            "X-CSRFToken": csrftoken,
+          },
+          body: JSON.stringify({ id: eid, name: ename, price: eprice, quantity: equantity }),
+        })
+        .then((response) => {
+          updateproductable(this)
+          //console.log(response)
+
+        })
+        .catch(function(error) {
+          console.log("ERROR:", error)
+        })
+
+      this.update({
+        inEditMode: { status: false, itmid: null }
+      })
+
+      updateproductable(this)
+
+    }
+
+  },
+  searchprod(e) {
+    e.preventDefault()
+    this.update({
+      searchqry: e.target.searchqry.value
+    })
+
+    updateproductable(this)
+
+  },
+  addmodelhide(e) {
+    console.log('model hide')
+
+
+    e.preventDefault()
+    this.update({
+      a_error_pname: false,
+      a_error_price: false,
+      a_error_qty: false,
+    })
+
+    $("input[name=pname]").val('')
+    $("input[name=price]").val('')
+    $("input[name=quantity]").val('')
+  },
+}
+</script>

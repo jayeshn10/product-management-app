@@ -1,0 +1,32 @@
+<todo>
+  <h3>{ props.title }</h3>
+
+  <table>
+  <tr>
+    <th>Product Name</th>
+    <th>Price</th>
+    <th>Quantity</th>
+  </tr>
+  <tr each={ item in state.items }>
+    <td>{ item.id }</td>
+    <td>{ item.name } </td>
+    <td>{ item.price }</td>
+    <td>{ item.quantity }</td>
+  </tr>
+  
+</table>
+
+  
+
+  <script>
+    export default {
+      onBeforeMount(props, state) {
+        // initial state
+        this.state = {
+          items: props.items,
+          text: ''
+        }
+      }
+    }
+  </script>
+</todo>
